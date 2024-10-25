@@ -1,2 +1,2 @@
-# Celestial Bodies Database
-Celestial bodies Postgresql database for relational databases certification on freecodecamp.org
+# Relational Databases Certificate
+PostgreSQL and bash scripting course
