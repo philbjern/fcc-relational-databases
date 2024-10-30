@@ -1,0 +1,1 @@
+grep -n meow[a-z]* kitty_ipsum_1.txt | sed -r 's/([0-9]+).*/\1/' >> kitty_info.txt
