@@ -3,26 +3,24 @@ PSQL="psql --username=freecodecamp --dbname=number_guess -t --no-align -c"
 
 echo "Enter your username:"
 read USERNAME
-GAMES_COUNT=0
-BEST_SCORE=0
 
 USER_RESULT=$($PSQL "SELECT * FROM users WHERE username='$USERNAME' LIMIT 1")
 if [[ -z $USER_RESULT ]]
 then
 	echo "Welcome, $USERNAME! It looks like this is your first time here."
 	INSERT_USERNAME_RESULT=$($PSQL "INSERT INTO users(username, games_played, best_game) VALUES('$USERNAME', 0, 0)")
-	USER_RESULT=$($PSQL "SELECT * FROM users WHERE username='$USERNAME' LIMIT 1")
-fi
-echo "$USER_RESULT" | while IFS=\| read USER_ID USERNAME_FROM_DB GAMES_PLAYED BEST_GAME
-do
-	echo "Welcome back, $USERNAME_FROM_DB! You have played $GAMES_PLAYED games, and your best game took $BEST_GAME guesses."
-	GAMES_COUNT=$GAMES_PLAYED
-	BEST_SCORE=$BEST_GAME
+else
+	echo "$USER_RESULT" | while IFS='|' read USER_ID USERNAME_FROM_DB GAMES_PLAYED BEST_GAME
+	do
+		echo "Welcome back, $USERNAME_FROM_DB! You have played $GAMES_PLAYED games, and your best game took $BEST_GAME guesses."
 
-done
+	done
+fi
+
+GAMES_PLAYED=$($PSQL "SELECT games_played FROM users WHERE username='$USERNAME'")
+BEST_GAME=$($PSQL "SELECT best_game FROM users WHERE username='$USERNAME'")
 
 NUMBER=$(( RANDOM % 1000 ))
-echo $NUMBER
 
 echo "Guess the secret number between 1 and 1000:"
 read GUESS
@@ -55,17 +53,13 @@ done
 
 echo "You guessed it in $NUMBER_OF_GUESSES tries. The secret number was $NUMBER. Nice job!"
 
-NEW_GAMES_PLAYED=$((GAMES_COUNT++))
+NEW_GAMES_PLAYED=$((GAMES_PLAYED++))
 
-if [[ $NUMBER_OF_GUESSES < $BEST_SCORE ]]
+if [[ $NUMBER_OF_GUESSES < $BEST_GAME ]] || [[ $BEST_GAME -eq 0 ]]
 then
 	NEW_BEST_GAME=$NUMBER_OF_GUESSES
 else
-	NEW_BEST_GAME=$BEST_SCORE
+	NEW_BEST_GAME=$BEST_GAME
 fi
 
-echo "$NEW_GAMES_PLAYED $NEW_BEST_GAME"
-
-UPDATE_RESULT=$($PSQL "UPDATE users SET games_played='$NEW_GAMES_PLAYED', best_game='$NEW_BEST_GAME' WHERE username='$USERNAME'")
-echo "$UPDATE_RESULT"
-
+UPDATE_RESULT=$($PSQL "UPDATE users SET games_played='$((GAMES_PLAYED++))', best_game='$NEW_BEST_GAME' WHERE username='$USERNAME'")
